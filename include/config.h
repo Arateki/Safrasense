@@ -47,3 +47,12 @@
 #define NVS_CONFIG_NS   "cfg"
 #define NVS_IDENTITY_NS "ident"
 #define NVS_TELEMETRY_NS "tel"
+
+// ── Emulador Wokwi (só existe no env `wokwi`) ─────────────────────────────
+#ifdef WOKWI_EMULATOR
+#define WOKWI_WIFI_SSID         "Wokwi-GUEST"
+#define WOKWI_SERVER_EXT_NAME   "raiznetd-public"
+#define WOKWI_SERVER_EXT_URL    "http://host.wokwi.internal:3000/v1/telemetry"
+#define WOKWI_SERVER_LOCAL_NAME "raiznetd-local"
+#define WOKWI_SERVER_LOCAL_URL  "host.wokwi.internal:3001"
+#endif
