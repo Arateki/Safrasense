@@ -106,12 +106,32 @@ static bool postTelemetry(const String& url, const String& body) {
   http.begin(url);
   http.addHeader("Content-Type", "application/json");
   int code = http.POST(body);
+
+  if (code == 200) {
+    http.end();
+    return true;
+  }
+
+  // O servidor responde 207 com o erro por bloco no body — nunca 404 no
+  // /v1/telemetry. Como enviamos 1 bloco por request, 207 = este bloco falhou.
+  // "Device not found" é contrato dos dois servidores (TS e Rust): o servidor
+  // não conhece este device (ex.: banco recriado). Invalida o registro local
+  // para o próximo ciclo re-registrar e reenviar este mesmo bloco.
+  if (code == 207) {
+    String resp = http.getString();
+    http.end();
+    if (resp.indexOf("Device not found") >= 0) {
+      Serial.printf("[telemetry] Servidor %s não conhece o device. Invalidando registro.\n", url.c_str());
+      invalidateDeviceRegistry();
+    } else {
+      Serial.printf("[telemetry] Bloco rejeitado por %s: %s\n", url.c_str(), resp.c_str());
+    }
+    return false;
+  }
+
   http.end();
 
-  if (code == 200) return true;
-  
-  // A 404 means the server does not know this device.
-  // Invalidate local registry state so the device module can register again.
+  // Defesa: servidores antigos podem sinalizar device desconhecido com 404.
   if (code == 404) {
     Serial.printf("[telemetry] Servidor %s retornou 404. Invalidando registro.\n", url.c_str());
     invalidateDeviceRegistry();
