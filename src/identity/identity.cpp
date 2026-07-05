@@ -28,15 +28,15 @@ void saveIdentity(const DeviceIdentity& id) {
 }
 
 #ifdef QEMU_EMULATOR
-// Emulador: o QEMU não persiste NVS entre execuções. Identidade fixa mantém
-// o device_id estável e o owner determinístico evita registro 400
-// (ownerPubkey vazio antes do onboarding).
+// Emulador: identidade fixa para o device_id ser estável e reprodutível no
+// emulador, independente do estado da flash. O owner determinístico evita
+// registro 400 (ownerPubkey vazio antes do onboarding).
 DeviceIdentity loadOrCreateIdentity() {
   DeviceIdentity id;
   id.mac = WiFi.macAddress();
   static const uint8_t kFixedSeed[32] = {
     'S', 'a', 'f', 'r', 'a', 's', 'e', 'n',
-    's', 'e', '-', 'W', 'o', 'k', 'w', 'i',
+    's', 'e', '-', 'Q', 'E', 'M', 'U', '-',
     '-', 'd', 'e', 'v', '-', '0', '0', '0',
     '1', 0, 0, 0, 0, 0, 0, 0,
   };

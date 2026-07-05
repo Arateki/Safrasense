@@ -9,7 +9,17 @@ QEMU_URL="https://github.com/espressif/qemu/releases/download/esp-develop-9.0.0-
 QEMU_BIN="emu/.qemu/qemu/bin/qemu-system-xtensa"
 
 DATA_DIR_CREATED=0
-if [ -z "${DATA_DIR:-}" ]; then
+DATA_DIR="${DATA_DIR:-}"
+RAIZNETD_PID=""
+
+cleanup() {
+  kill "$RAIZNETD_PID" 2>/dev/null || true
+  wait "$RAIZNETD_PID" 2>/dev/null || true
+  [ "$DATA_DIR_CREATED" = 1 ] && rm -rf "$DATA_DIR"
+}
+trap cleanup EXIT INT TERM
+
+if [ -z "$DATA_DIR" ]; then
   DATA_DIR="$(mktemp -d /tmp/raiznetd-emu.XXXXXX)"
   DATA_DIR_CREATED=1
 fi
@@ -18,6 +28,13 @@ if [ ! -x "$QEMU_BIN" ]; then
   echo "[run] Baixando QEMU da Espressif (uma vez)..."
   mkdir -p emu/.qemu
   curl -L "$QEMU_URL" | tar -xJ -C emu/.qemu
+fi
+
+if ldd "$QEMU_BIN" 2>/dev/null | grep -q "not found"; then
+  echo "[emu] Dependências de sistema faltando para o QEMU:" >&2
+  ldd "$QEMU_BIN" | grep "not found" >&2
+  echo "[emu] Em Fedora: sudo dnf install libslirp" >&2
+  exit 1
 fi
 
 export PATH="$HOME/.platformio/penv/bin:$PATH"
@@ -30,13 +47,6 @@ echo "[run] raiznetd: dados em $DATA_DIR, portas 3000 (público) / 3001 (local)"
 cargo build -q -p raiznetd --manifest-path "$RAIZNET_DIR/Cargo.toml"
 RAIZNET_DATA_DIR="$DATA_DIR" "$RAIZNET_DIR/target/debug/raiznetd" &
 RAIZNETD_PID=$!
-
-cleanup() {
-  kill "$RAIZNETD_PID" 2>/dev/null || true
-  wait "$RAIZNETD_PID" 2>/dev/null || true
-  [ "$DATA_DIR_CREATED" = 1 ] && rm -rf "$DATA_DIR"
-}
-trap cleanup EXIT INT TERM
 
 for _ in $(seq 1 30); do
   curl -sf http://127.0.0.1:3000/health >/dev/null 2>&1 && break

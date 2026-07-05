@@ -8,21 +8,10 @@ cd "$(dirname "$0")/.."
 RAIZNET_DIR="${RAIZNET_DIR:-../Raiznet-rust}"
 QEMU_URL="https://github.com/espressif/qemu/releases/download/esp-develop-9.0.0-20240606/qemu-xtensa-softmmu-esp_develop_9.0.0_20240606-x86_64-linux-gnu.tar.xz"
 QEMU_BIN="emu/.qemu/qemu/bin/qemu-system-xtensa"
-DATA_DIR="$(mktemp -d /tmp/raiznetd-e2e.XXXXXX)"
-EMU_LOG="$(mktemp /tmp/emu-e2e.XXXXXX.log)"
+DATA_DIR=""
+EMU_LOG=""
 RAIZNETD_PID=""
 EMU_PID=""
-
-if [ ! -x "$QEMU_BIN" ]; then
-  echo "[e2e] Baixando QEMU da Espressif (uma vez)..."
-  mkdir -p emu/.qemu
-  curl -L "$QEMU_URL" | tar -xJ -C emu/.qemu
-fi
-
-pio run -e qemu >/dev/null
-rm -f emu/flash.bin
-emu/mkflash.sh >/dev/null
-cargo build -q -p raiznetd --manifest-path "$RAIZNET_DIR/Cargo.toml"
 
 start_raiznetd() {
   RAIZNET_DATA_DIR="$DATA_DIR" "$RAIZNET_DIR/target/debug/raiznetd" &
@@ -47,7 +36,29 @@ cleanup() {
   rm -rf "$DATA_DIR"
   echo "e2e: log do emulador em $EMU_LOG"
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
+
+if [ ! -x "$QEMU_BIN" ]; then
+  echo "[e2e] Baixando QEMU da Espressif (uma vez)..."
+  mkdir -p emu/.qemu
+  curl -L "$QEMU_URL" | tar -xJ -C emu/.qemu
+fi
+
+if ldd "$QEMU_BIN" 2>/dev/null | grep -q "not found"; then
+  echo "[emu] Dependências de sistema faltando para o QEMU:" >&2
+  ldd "$QEMU_BIN" | grep "not found" >&2
+  echo "[emu] Em Fedora: sudo dnf install libslirp" >&2
+  exit 1
+fi
+
+export PATH="$HOME/.platformio/penv/bin:$PATH"
+pio run -e qemu >/dev/null
+rm -f emu/flash.bin
+emu/mkflash.sh >/dev/null
+cargo build -q -p raiznetd --manifest-path "$RAIZNET_DIR/Cargo.toml"
+
+DATA_DIR="$(mktemp -d /tmp/raiznetd-e2e.XXXXXX)"
+EMU_LOG="$(mktemp /tmp/emu-e2e.XXXXXX.log)"
 
 start_raiznetd
 "$QEMU_BIN" -nographic -machine esp32 \
