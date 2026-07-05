@@ -1,9 +1,0 @@
-[wokwi]
-version = 1
-firmware = "../.pio/build/wokwi/firmware.bin"
-elf = "../.pio/build/wokwi/firmware.elf"
-
-# UI local do firmware: http://localhost:8180 no navegador do host.
-[[net.forward]]
-from = "localhost:8180"
-to = "target:80"

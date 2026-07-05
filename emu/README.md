@@ -1,27 +1,38 @@
-# Emulador headless (Wokwi CLI)
+# Emulador local (QEMU Espressif)
 
-Roda o firmware real (env `wokwi` do PlatformIO) num ESP32 emulado, falando
-com o `raiznetd` (worktree `../Raiznet-rust`) na sua máquina.
+Roda o firmware real (env `qemu`, build híbrido arduino+espidf) num ESP32
+emulado **na sua máquina**, falando com o `raiznetd` (worktree
+`../Raiznet-rust`). Sem token, sem nuvem.
 
-## Setup (uma vez)
+## Como funciona
 
-1. Instale o Wokwi CLI: <https://docs.wokwi.com/wokwi-ci/getting-started>
-2. Crie um token gratuito em <https://wokwi.com/dashboard/ci> e exporte:
-   `export WOKWI_CLI_TOKEN=...` (coloque no seu shell rc).
-3. Dependências: `pio`, `cargo`, `curl`, `jq`.
+- Rede: Ethernet virtual `openeth` + slirp. O host é `10.0.2.2`
+  (portas 3000/3001 do raiznetd). Wi-Fi/portal captivo não existem no
+  emulador (flag `QEMU_EMULATOR`).
+- Identidade fixa e telemetria a cada 10 s; sensores retornam valores
+  sintéticos determinísticos.
+- A flash (`emu/flash.bin`) persiste entre execuções — bom para testar
+  NVS; apague o arquivo para "fábrica".
 
 ## Uso
 
-- `emu/run.sh` — dev interativo: raiznetd + emulador com serial no terminal.
+- `emu/run.sh` — dev interativo (serial no terminal; sair: Ctrl+A, X).
   - UI local do firmware: <http://localhost:8180>
   - Inspecionar o servidor: `curl -s localhost:3000/v1/devices | jq`
 - `emu/e2e.sh` — teste ponta a ponta (registro, telemetria nos dois
-  listeners, re-registro após wipe do banco). Sai com código ≠ 0 em falha.
+  listeners, re-registro após wipe do banco). Exit ≠ 0 em falha.
 
-## O que difere da placa real (flag `WOKWI_EMULATOR`)
+O QEMU da Espressif é baixado automaticamente na primeira execução para
+`emu/.qemu/` (git-ignorado). Dependências: `pio`, `cargo`, `curl`, `jq`,
+`python3`, `libslirp` (rede do QEMU — em muitas distros já vem instalada
+como dependência de outros pacotes; senão, instale via seu gerenciador de
+pacotes, ex. `pacman -S libslirp` / `apt install libslirp0` / `dnf install
+libslirp`).
 
-- Sem portal captivo: conecta direto na rede virtual `Wokwi-GUEST`.
-- Servidores default: `host.wokwi.internal:3000/3001` (nunca produção).
-- Identidade fixa (device_id estável entre execuções; NVS não persiste).
-- Telemetria a cada 10 s (produção: 60 s).
-- Sem VL53L0X (peça não existe no Wokwi); waterLevel não é enviado.
+## Solução de problemas
+
+- **`idf-component-manager` falha no PlatformIO (Python 3.14+)**: o
+  espidf 4.4.7 fixa uma versão incompatível. Corrija instalando
+  `idf-component-manager~=1.2` no venv
+  `~/.platformio/penv/.espidf-4.4.7` e criando o arquivo vazio
+  `~/.platformio/packages/framework-espidf/.pio_skip_pypackages`.
