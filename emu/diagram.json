@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "author": "Safrasense",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0 },
+    { "type": "wokwi-dht22", "id": "dht", "top": -90, "left": 220 },
+    { "type": "wokwi-potentiometer", "id": "tds", "top": 60, "left": 220 },
+    { "type": "wokwi-potentiometer", "id": "bat", "top": 170, "left": 220 },
+    { "type": "wokwi-led", "id": "ledR", "top": -80, "left": -120, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "ledY", "top": 0, "left": -120, "attrs": { "color": "yellow" } },
+    { "type": "wokwi-led", "id": "ledG", "top": 80, "left": -120, "attrs": { "color": "green" } }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "dht:VCC", "esp:3V3", "red", [] ],
+    [ "dht:GND", "esp:GND.1", "black", [] ],
+    [ "dht:SDA", "esp:D4", "green", [] ],
+    [ "tds:VCC", "esp:3V3", "red", [] ],
+    [ "tds:GND", "esp:GND.1", "black", [] ],
+    [ "tds:SIG", "esp:D34", "green", [] ],
+    [ "bat:VCC", "esp:3V3", "red", [] ],
+    [ "bat:GND", "esp:GND.1", "black", [] ],
+    [ "bat:SIG", "esp:D35", "green", [] ],
+    [ "ledR:A", "esp:D14", "red", [] ],
+    [ "ledR:C", "esp:GND.1", "black", [] ],
+    [ "ledY:A", "esp:D12", "yellow", [] ],
+    [ "ledY:C", "esp:GND.1", "black", [] ],
+    [ "ledG:A", "esp:D13", "green", [] ]
+  ]
+}
