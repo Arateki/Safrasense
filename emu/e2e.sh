@@ -47,7 +47,7 @@ fi
 if ldd "$QEMU_BIN" 2>/dev/null | grep -q "not found"; then
   echo "[emu] Dependências de sistema faltando para o QEMU:" >&2
   ldd "$QEMU_BIN" | grep "not found" >&2
-  echo "[emu] Em Fedora: sudo dnf install libslirp" >&2
+  echo "[emu] No Arch: sudo pacman -S libslirp (Fedora: dnf install libslirp)" >&2
   exit 1
 fi
 
