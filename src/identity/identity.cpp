@@ -27,8 +27,8 @@ void saveIdentity(const DeviceIdentity& id) {
   p.end();
 }
 
-#ifdef WOKWI_EMULATOR
-// Emulador: o Wokwi não persiste NVS entre execuções. Identidade fixa mantém
+#ifdef QEMU_EMULATOR
+// Emulador: o QEMU não persiste NVS entre execuções. Identidade fixa mantém
 // o device_id estável e o owner determinístico evita registro 400
 // (ownerPubkey vazio antes do onboarding).
 DeviceIdentity loadOrCreateIdentity() {

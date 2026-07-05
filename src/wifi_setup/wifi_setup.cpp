@@ -1,5 +1,6 @@
 #include "wifi_setup.h"
 #include "config.h"
+#include "net/net.h"
 #include "leds/leds.h"
 #include "identity/identity.h"
 #include "identity/qr_decode.h"
@@ -1392,25 +1393,17 @@ document.addEventListener('DOMContentLoaded', () => {
 )rawliteral";
 
 void setupWifi(DeviceConfig& cfg) {
-#ifdef WOKWI_EMULATOR
-  // Emulador: sem portal captivo. Conecta direto na rede virtual do Wokwi.
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WOKWI_WIFI_SSID, "", 6);  // canal 6 acelera o associate no Wokwi
-  Serial.print("[wifi] Conectando na Wokwi-GUEST");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(250);
-    Serial.print('.');
-  }
-  Serial.printf("\n[wifi] Conectado, IP %s\n", WiFi.localIP().toString().c_str());
+#ifdef QEMU_EMULATOR
+  // Emulador: sem portal captivo e sem rádio Wi-Fi — Ethernet virtual.
+  emuNetStart();
 
-  String emuMac = WiFi.macAddress();
+  String emuMac = WiFi.macAddress();  // core resolve via eFuse mesmo sem Wi-Fi
   emuMac.replace(":", "");
   String emuSuffix = emuMac.substring(emuMac.length() - 4);
   emuSuffix.toLowerCase();
   mdnsName = "safrasense-aqua-" + emuSuffix;
 
   configTime(NTP_GMT_OFFSET_SEC, NTP_DAYLIGHT_SEC, NTP_SERVER_1, NTP_SERVER_2);
-  MDNS.begin(mdnsName.c_str());
   return;
 #endif
 

@@ -48,11 +48,11 @@
 #define NVS_IDENTITY_NS "ident"
 #define NVS_TELEMETRY_NS "tel"
 
-// ── Emulador Wokwi (só existe no env `wokwi`) ─────────────────────────────
-#ifdef WOKWI_EMULATOR
-#define WOKWI_WIFI_SSID         "Wokwi-GUEST"
-#define WOKWI_SERVER_EXT_NAME   "raiznetd-public"
-#define WOKWI_SERVER_EXT_URL    "http://host.wokwi.internal:3000/v1/telemetry"
-#define WOKWI_SERVER_LOCAL_NAME "raiznetd-local"
-#define WOKWI_SERVER_LOCAL_URL  "host.wokwi.internal:3001"
+// ── Emulador QEMU (só existe no env `qemu`) ──────────────────────────────
+#ifdef QEMU_EMULATOR
+// 10.0.2.2 = host visto de dentro da rede slirp do QEMU.
+#define EMU_SERVER_EXT_NAME   "raiznetd-public"
+#define EMU_SERVER_EXT_URL    "http://10.0.2.2:3000/v1/telemetry"
+#define EMU_SERVER_LOCAL_NAME "raiznetd-local"
+#define EMU_SERVER_LOCAL_URL  "10.0.2.2:3001"
 #endif

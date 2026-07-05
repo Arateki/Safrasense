@@ -2,6 +2,7 @@
 #include "buffer.h"
 #include "config.h"
 #include "../device/device.h"
+#include "../net/net.h"
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -141,7 +142,7 @@ static bool postTelemetry(const String& url, const String& body) {
 }
 
 void sendPending() {
-  if (!gCfg || !gId || WiFi.status() != WL_CONNECTED) return;
+  if (!gCfg || !gId || !netReady()) return;
 
   // First, make sure the basic registry is synchronized lazily.
   syncDeviceRegistry(*gCfg, *gId);
