@@ -40,6 +40,25 @@ static int batteryPercent(float v) {
 }
 
 SensorData readSensors() {
+#ifdef QEMU_EMULATOR
+  // QEMU não emula DHT/ADC. Valores fixos plausíveis mantêm o pipeline de
+  // telemetria exercitado de ponta a ponta; o laser fica ausente como no
+  // hardware sem VL53L0X.
+  SensorData emu;
+  emu.captured_at        = millis();
+  emu.ec                 = 1412.0f;
+  emu.temp_ambient       = 24.5f;
+  emu.humidity           = 61.2f;
+  emu.bat_volts          = 3.9f;
+  emu.bat_percent        = 70;
+  emu.water_level        = -1;
+  emu.status.dht_ok      = true;
+  emu.status.tds_ok      = true;
+  emu.status.laser_ok    = true;   // ausente ≠ falho: não acender LED de erro
+  emu.status.battery_ok  = true;
+  return emu;
+#endif
+
   SensorData d;
   d.captured_at = millis();
 

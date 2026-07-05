@@ -26,7 +26,7 @@
 
 // ── Operation ─────────────────────────────────────────────────────────────
 #ifndef TELEMETRY_INTERVAL_MS
-#define TELEMETRY_INTERVAL_MS   60000   // 60s (o env wokwi sobrescreve via build_flags)
+#define TELEMETRY_INTERVAL_MS   60000   // 60s (o env qemu sobrescreve via build_flags)
 #endif
 #define TELEMETRY_BUFFER_SIZE   50      // max readings in RAM
 #define TELEMETRY_SEQ_BLOCK_SIZE 100    // reserves N seqs per NVS write
