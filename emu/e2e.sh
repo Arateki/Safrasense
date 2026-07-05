@@ -1,17 +1,27 @@
 #!/usr/bin/env bash
-# Teste e2e: firmware emulado (Wokwi) ↔ raiznetd.
+# Teste e2e: firmware emulado (QEMU) ↔ raiznetd.
 #   Fase 1: banco limpo → device registra e telemetria chega nos dois listeners.
 #   Fase 2: banco recriado → firmware re-registra sozinho (fix do 207).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 RAIZNET_DIR="${RAIZNET_DIR:-../Raiznet-rust}"
+QEMU_URL="https://github.com/espressif/qemu/releases/download/esp-develop-9.0.0-20240606/qemu-xtensa-softmmu-esp_develop_9.0.0_20240606-x86_64-linux-gnu.tar.xz"
+QEMU_BIN="emu/.qemu/qemu/bin/qemu-system-xtensa"
 DATA_DIR="$(mktemp -d /tmp/raiznetd-e2e.XXXXXX)"
-WOKWI_LOG="$(mktemp /tmp/wokwi-e2e.XXXXXX.log)"
+EMU_LOG="$(mktemp /tmp/emu-e2e.XXXXXX.log)"
 RAIZNETD_PID=""
-WOKWI_PID=""
+EMU_PID=""
 
-pio run -e wokwi >/dev/null
+if [ ! -x "$QEMU_BIN" ]; then
+  echo "[e2e] Baixando QEMU da Espressif (uma vez)..."
+  mkdir -p emu/.qemu
+  curl -L "$QEMU_URL" | tar -xJ -C emu/.qemu
+fi
+
+pio run -e qemu >/dev/null
+rm -f emu/flash.bin
+emu/mkflash.sh >/dev/null
 cargo build -q -p raiznetd --manifest-path "$RAIZNET_DIR/Cargo.toml"
 
 start_raiznetd() {
@@ -33,15 +43,18 @@ stop_raiznetd() {
 
 cleanup() {
   stop_raiznetd
-  [ -n "$WOKWI_PID" ] && kill "$WOKWI_PID" 2>/dev/null || true
+  [ -n "$EMU_PID" ] && kill "$EMU_PID" 2>/dev/null || true
   rm -rf "$DATA_DIR"
-  echo "e2e: log do emulador em $WOKWI_LOG"
+  echo "e2e: log do emulador em $EMU_LOG"
 }
 trap cleanup EXIT
 
 start_raiznetd
-wokwi-cli --timeout 0 emu >"$WOKWI_LOG" 2>&1 &
-WOKWI_PID=$!
+"$QEMU_BIN" -nographic -machine esp32 \
+  -drive file=emu/flash.bin,if=mtd,format=raw \
+  -nic user,model=open_eth \
+  -serial file:"$EMU_LOG" >/dev/null 2>&1 &
+EMU_PID=$!
 
 # Espera até $3 segundos por >= $2 leituras no listener da porta $1.
 wait_readings() {

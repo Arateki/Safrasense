@@ -22,7 +22,9 @@ fi
 
 export PATH="$HOME/.platformio/penv/bin:$PATH"
 pio run -e qemu
-emu/mkflash.sh
+if [ ! -f emu/flash.bin ] || [ .pio/build/qemu/firmware.bin -nt emu/flash.bin ]; then
+  emu/mkflash.sh
+fi
 
 echo "[run] raiznetd: dados em $DATA_DIR, portas 3000 (público) / 3001 (local)"
 cargo build -q -p raiznetd --manifest-path "$RAIZNET_DIR/Cargo.toml"
