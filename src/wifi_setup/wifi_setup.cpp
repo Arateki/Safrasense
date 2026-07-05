@@ -1,5 +1,6 @@
 #include "wifi_setup.h"
 #include "config.h"
+#include "net/net.h"
 #include "leds/leds.h"
 #include "identity/identity.h"
 #include "identity/qr_decode.h"
@@ -1392,6 +1393,20 @@ document.addEventListener('DOMContentLoaded', () => {
 )rawliteral";
 
 void setupWifi(DeviceConfig& cfg) {
+#ifdef QEMU_EMULATOR
+  // Emulador: sem portal captivo e sem rádio Wi-Fi — Ethernet virtual.
+  emuNetStart();
+
+  String emuMac = WiFi.macAddress();  // core resolve via eFuse mesmo sem Wi-Fi
+  emuMac.replace(":", "");
+  String emuSuffix = emuMac.substring(emuMac.length() - 4);
+  emuSuffix.toLowerCase();
+  mdnsName = "safrasense-aqua-" + emuSuffix;
+
+  configTime(NTP_GMT_OFFSET_SEC, NTP_DAYLIGHT_SEC, NTP_SERVER_1, NTP_SERVER_2);
+  return;
+#endif
+
   WiFi.mode(WIFI_STA);
   WiFi.setTxPower(WIFI_POWER_MINUS_1dBm);
 

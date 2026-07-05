@@ -1,7 +1,30 @@
-# Emulação headless do firmware (Wokwi CLI) + correção do 207
+# Emulação headless do firmware + correção do 207
 
-Data: 2026-07-04
-Status: aprovado em conversa; aguardando revisão final da spec
+Data: 2026-07-04 (revisado 2026-07-05: Wokwi → QEMU)
+Status: aprovado; arquitetura revisada após bloqueio comprovado do Wokwi
+
+> **REVISÃO 2026-07-05 — pivô para QEMU.** O e2e real provou que o wokwi-cli
+> executa a simulação na nuvem do Wokwi: nenhum pacote do firmware emulado
+> chega à máquina local (verificado com listener dual-stack), e o acesso a
+> `host.wokwi.internal` exige o gateway privado, recurso pago — inclusive na
+> extensão do VS Code. Decisão do Yan: solução 100% local → **QEMU da
+> Espressif** com Ethernet virtual `openeth` (o QEMU não emula o rádio
+> Wi-Fi). Consequências:
+> - Env de build passa a ser `qemu` (`-DQEMU_EMULATOR`), compilação híbrida
+>   `framework = arduino, espidf` para habilitar `CONFIG_ETH_USE_OPENETH`
+>   (o core Arduino pré-compilado vem com o driver desligado).
+> - Sob o flag, a rede sobe por `esp_eth` (openeth) em vez de Wi-Fi;
+>   `HTTPClient`/`WiFiClient` funcionam inalterados (TCP genérico). Checks
+>   `WiFi.status()` passam por um helper `netReady()` (produção: Wi-Fi).
+> - O host é `10.0.2.2` (slirp) — sem túnel, sem token, sem nuvem.
+>   UI local do firmware via `hostfwd` (localhost:8180 → :80 do device).
+> - Sensores: valores sintéticos determinísticos sob o flag (não há DHT/ADC
+>   no QEMU); o caminho de falha do DHT continua testável.
+> - Ganhos sobre o Wokwi: flash persistente entre reboots (testes de NVS),
+>   determinismo total, offline, CI-able sem dependência externa.
+> - Fora: interação física (botão/LEDs/potenciômetros) — placa real cobre.
+> - O fix do 207, a identidade determinística, o bypass de portal e os
+>   scripts run/e2e permanecem; muda o transporte e o endereço do host.
 
 ## Contexto
 

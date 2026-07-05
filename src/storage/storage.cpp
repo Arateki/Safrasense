@@ -20,7 +20,13 @@ DeviceConfig loadConfig() {
     String mac = WiFi.macAddress();
     mac.replace(":", "");
     cfg.device_name = "Safrasense-aqua-" + mac.substring(mac.length() - 4);
+#ifdef QEMU_EMULATOR
+    // Emulador: raiznetd do host — nunca o servidor de produção.
+    cfg.servers_external.push_back({ EMU_SERVER_EXT_NAME, EMU_SERVER_EXT_URL });
+    cfg.servers_local.push_back({ EMU_SERVER_LOCAL_NAME, EMU_SERVER_LOCAL_URL });
+#else
     cfg.servers_external.push_back({ DEFAULT_SERVER_EXT_NAME, DEFAULT_SERVER_EXT_URL });
+#endif
     return cfg;
   }
 

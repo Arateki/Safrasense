@@ -1,0 +1,4 @@
+.pio/
+sdkconfig.qemu
+emu/.qemu/
+emu/flash.bin

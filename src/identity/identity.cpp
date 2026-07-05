@@ -27,12 +27,35 @@ void saveIdentity(const DeviceIdentity& id) {
   p.end();
 }
 
+#ifdef QEMU_EMULATOR
+// Emulador: identidade fixa para o device_id ser estável e reprodutível no
+// emulador, independente do estado da flash. O owner determinístico evita
+// registro 400 (ownerPubkey vazio antes do onboarding).
+DeviceIdentity loadOrCreateIdentity() {
+  DeviceIdentity id;
+  id.mac = WiFi.macAddress();
+  static const uint8_t kFixedSeed[32] = {
+    'S', 'a', 'f', 'r', 'a', 's', 'e', 'n',
+    's', 'e', '-', 'Q', 'E', 'M', 'U', '-',
+    '-', 'd', 'e', 'v', '-', '0', '0', '0',
+    '1', 0, 0, 0, 0, 0, 0, 0,
+  };
+  memcpy(id.private_key, kFixedSeed, 32);
+  Ed25519::derivePublicKey(id.public_key, id.private_key);
+  id.public_key_hex = bytesToHex(id.public_key, 32);
+  importOwnerIdentity(id,
+    "abandon abandon abandon abandon abandon abandon "
+    "abandon abandon abandon abandon abandon about");
+  id.lang = LANG_PT;
+  return id;
+}
+#else
 DeviceIdentity loadOrCreateIdentity() {
   DeviceIdentity id;
   id.mac = WiFi.macAddress();
   Preferences p;
   p.begin(NVS_IDENTITY_NS, false);
-  
+
   if (p.getBytes("privkey", id.private_key, 32) != 32) {
     esp_fill_random(id.private_key, 32);
     p.putBytes("privkey", id.private_key, 32);
@@ -50,6 +73,7 @@ DeviceIdentity loadOrCreateIdentity() {
   p.end();
   return id;
 }
+#endif
 
 static const char* const* wordlistForLanguage(Language lang) {
   return (lang == LANG_PT) ? BIP39_WORDLIST_PT :

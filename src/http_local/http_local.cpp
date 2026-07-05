@@ -1,5 +1,6 @@
 #include "http_local.h"
 #include "config.h"
+#include "net/net.h"
 #include "telemetry/telemetry.h"
 #include "telemetry/buffer.h"
 #include "identity/identity.h"
@@ -1073,13 +1074,13 @@ const char LOCAL_DASHBOARD_JS[] PROGMEM = R"rawliteral(
 static void handleApiStatus() {
   TelemetryState ts = getTelemetryState();
   JsonDocument   doc;
-  bool wifiOk = (WiFi.status() == WL_CONNECTED);
+  bool wifiOk = netReady();
 
   doc["device_name"]    = gCfg->device_name;
   doc["device_id"]      = gId->public_key_hex;
   doc["mac"]            = gId->mac;
   doc["mdns"]           = getMdnsName();
-  doc["ip"]             = WiFi.localIP().toString();
+  doc["ip"]             = netLocalIp();
   doc["wifi_ok"]        = wifiOk;
   doc["server_ok"]      = ts.last_send_ok;
   doc["last_send_time"] = ts.last_send_time;

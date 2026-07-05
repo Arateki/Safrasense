@@ -1,4 +1,5 @@
 #include "device.h"
+#include "net/net.h"
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
@@ -13,7 +14,7 @@ static String normalizedMac(const String& mac) {
 }
 
 static bool postRegistration(const String& baseUrl, const DeviceConfig& cfg, const DeviceIdentity& id) {
-  if (baseUrl.isEmpty() || WiFi.status() != WL_CONNECTED) return false;
+  if (baseUrl.isEmpty() || !netReady()) return false;
 
   JsonDocument doc;
   doc["id"] = id.public_key_hex;

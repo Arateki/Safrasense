@@ -25,7 +25,9 @@
 #define BTN_LONG_MS     5000    // hold 5s -> full reset
 
 // ── Operation ─────────────────────────────────────────────────────────────
-#define TELEMETRY_INTERVAL_MS   60000   // 60s
+#ifndef TELEMETRY_INTERVAL_MS
+#define TELEMETRY_INTERVAL_MS   60000   // 60s (o env qemu sobrescreve via build_flags)
+#endif
 #define TELEMETRY_BUFFER_SIZE   50      // max readings in RAM
 #define TELEMETRY_SEQ_BLOCK_SIZE 100    // reserves N seqs per NVS write
 
@@ -45,3 +47,12 @@
 #define NVS_CONFIG_NS   "cfg"
 #define NVS_IDENTITY_NS "ident"
 #define NVS_TELEMETRY_NS "tel"
+
+// ── Emulador QEMU (só existe no env `qemu`) ──────────────────────────────
+#ifdef QEMU_EMULATOR
+// 10.0.2.2 = host visto de dentro da rede slirp do QEMU.
+#define EMU_SERVER_EXT_NAME   "raiznetd-public"
+#define EMU_SERVER_EXT_URL    "http://10.0.2.2:3000/v1/telemetry"
+#define EMU_SERVER_LOCAL_NAME "raiznetd-local"
+#define EMU_SERVER_LOCAL_URL  "10.0.2.2:3001"
+#endif
