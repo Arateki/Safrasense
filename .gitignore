@@ -2,3 +2,4 @@
 sdkconfig.qemu
 emu/.qemu/
 emu/flash.bin
+include/pio_test_guard.h

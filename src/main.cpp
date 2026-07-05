@@ -10,6 +10,9 @@
 #include "wifi_setup/wifi_setup.h"
 #include "http_local/http_local.h"
 #include "device/device.h"
+#include "pio_test_guard.h"
+
+#ifndef PIO_UNIT_TESTING
 
 SET_LOOP_TASK_STACK_SIZE(16384);
 
@@ -99,3 +102,5 @@ void loop() {
     if (ts.last_send_ok) blinkOnSend();
   }
 }
+
+#endif  // PIO_UNIT_TESTING

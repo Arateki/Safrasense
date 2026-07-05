@@ -3,9 +3,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-BUILD=.pio/build/qemu
+BUILD="${1:-.pio/build/qemu}"
 ESPTOOL="$HOME/.platformio/packages/tool-esptoolpy/esptool.py"
-OUT=emu/flash.bin
+OUT="${2:-emu/flash.bin}"
 
 # O build híbrido gera bootloader.bin/partitions.bin/firmware.bin; o offset
 # do ota_data (0xe000) só entra se o arquivo existir no build.
