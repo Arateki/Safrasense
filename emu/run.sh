@@ -12,9 +12,10 @@ if [ -z "${DATA_DIR:-}" ]; then
 fi
 
 pio run -e wokwi
+cargo build -q -p raiznetd --manifest-path "$RAIZNET_DIR/Cargo.toml"
 
 echo "[run] raiznetd: dados em $DATA_DIR, portas 3000 (público) / 3001 (local)"
-(cd "$RAIZNET_DIR" && RAIZNET_DATA_DIR="$DATA_DIR" cargo run -q -p raiznetd) &
+RAIZNET_DATA_DIR="$DATA_DIR" "$RAIZNET_DIR/target/debug/raiznetd" &
 RAIZNETD_PID=$!
 cleanup() {
   kill "$RAIZNETD_PID" 2>/dev/null || true
