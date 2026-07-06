@@ -22,7 +22,18 @@ cd "$(dirname "$0")/.."
 BUILD="$1"
 FLASH="$(mktemp /tmp/safra-test-flash.XXXXXX.bin)"
 WATCHDOG_PID=""
-trap 'rm -f "$FLASH"; [ -n "$WATCHDOG_PID" ] && kill "$WATCHDOG_PID" 2>/dev/null; true' EXIT
+QEMU_PID=""
+
+cleanup() {
+  if [ -n "${QEMU_PID:-}" ] && kill -0 "$QEMU_PID" 2>/dev/null; then
+    kill "$QEMU_PID" 2>/dev/null || true
+    sleep 1
+    kill -9 "$QEMU_PID" 2>/dev/null || true
+  fi
+  [ -n "$WATCHDOG_PID" ] && kill "$WATCHDOG_PID" 2>/dev/null
+  rm -f "$FLASH"
+}
+trap cleanup EXIT INT TERM
 emu/mkflash.sh "$BUILD" "$FLASH" >&2 || exit 1
 
 # coproc para termos o PID do QEMU e poder matá-lo ao ver o fim do relatório.
