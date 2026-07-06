@@ -79,16 +79,17 @@ emu_stop_raiznetd() {
   RAIZNETD_PID=""
 }
 
-# emu_start_qemu FLASH LOG [EXTRA_ARGS...]
+# emu_start_qemu FLASH LOG [NIC_SUFFIX]
 # Sobe o QEMU em background (sem tela, sem stdio interativo), logando a
-# serial em LOG. EXTRA_ARGS (se houver) são inseridos entre a nic e a
-# serial, para uso futuro (ex.: hostfwd). Seta EMU_PID.
+# serial em LOG. NIC_SUFFIX (se houver) é concatenado dentro do PRÓPRIO
+# valor de -nic (ex.: ",hostfwd=tcp:127.0.0.1:8180-:80"), nunca como argv
+# separado — um segundo "-nic user,..." criaria uma segunda interface de
+# rede e o hostfwd não funcionaria. Seta EMU_PID.
 emu_start_qemu() {
-  local flash="$1" log="$2"
-  shift 2
+  local flash="$1" log="$2" nic_suffix="${3:-}"
   "$QEMU_BIN" -nographic -machine esp32 \
     -drive file="$flash",if=mtd,format=raw \
-    -nic user,model=open_eth "$@" \
+    -nic "user,model=open_eth${nic_suffix}" \
     -serial file:"$log" >/dev/null 2>&1 &
   EMU_PID=$!
 }
