@@ -1,9 +1,9 @@
 #include "telemetry.h"
 #include "buffer.h"
+#include "format.h"
 #include "config.h"
 #include "../device/device.h"
 #include "../net/net.h"
-#include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
 
@@ -35,69 +35,6 @@ static void setServerOnline(uint8_t bit, bool online) {
   uint32_t flag = (1u << bit);
   if (online) gState.online_mask |= flag;
   else gState.online_mask &= ~flag;
-}
-
-static String toHex(const String& raw) {
-  static const char* hex = "0123456789abcdef";
-  String out;
-  out.reserve(raw.length() * 2);
-  for (size_t i = 0; i < raw.length(); i++) {
-    uint8_t b = (uint8_t)raw[i];
-    out += hex[b >> 4];
-    out += hex[b & 0x0f];
-  }
-  return out;
-}
-
-static String fieldValue(float value, uint8_t decimals) {
-  return String(roundf(value * powf(10, decimals)) / powf(10, decimals), (unsigned int)decimals);
-}
-
-static String u64ToString(uint64_t value) {
-  char buf[21];
-  snprintf(buf, sizeof(buf), "%llu", (unsigned long long)value);
-  return String(buf);
-}
-
-static String buildRaw(const TelemetryEntry& e) {
-  String raw;
-  raw.reserve(180);
-  raw += gId->public_key_hex;
-  raw += '|';
-  raw += u64ToString(e.seq);
-  raw += '|';
-  raw += u64ToString(e.timestamp_ms);
-  raw += "|0";
-  if (!isnan(e.ec)) { raw += "|ec="; raw += fieldValue(e.ec, 0); }
-  if (!isnan(e.ph)) { raw += "|ph="; raw += fieldValue(e.ph, 2); }
-  if (e.water_level >= 0) { raw += "|waterLevel="; raw += fieldValue(e.water_level, 0); }
-  if (!isnan(e.temp_ambient)) { raw += "|tempAmbient="; raw += fieldValue(e.temp_ambient, 2); }
-  if (!isnan(e.humidity)) { raw += "|humidity="; raw += fieldValue(e.humidity, 2); }
-  return raw;
-}
-
-static String buildJson(const TelemetryEntry& e, const String& raw, const String& sig) {
-  JsonDocument doc;
-  JsonArray blocks = doc["blocks"].to<JsonArray>();
-  JsonObject block = blocks.add<JsonObject>();
-
-  block["deviceId"]   = gId->public_key_hex;
-  block["seq"]        = u64ToString(e.seq);
-  block["timestamp"]  = u64ToString(e.timestamp_ms);
-  block["keyVersion"] = 0;
-
-  if (!isnan(e.ec)) block["ec"]["plain"] = roundf(e.ec);
-  if (!isnan(e.ph)) block["ph"]["plain"] = roundf(e.ph * 100) / 100.0f;
-  if (e.water_level >= 0) block["waterLevel"]["plain"] = e.water_level;
-  if (!isnan(e.temp_ambient)) block["tempAmbient"]["plain"] = roundf(e.temp_ambient * 100) / 100.0f;
-  if (!isnan(e.humidity)) block["humidity"]["plain"] = roundf(e.humidity * 100) / 100.0f;
-
-  block["signature"] = sig;
-  block["raw"]       = toHex(raw);
-
-  String out;
-  serializeJson(doc, out);
-  return out;
 }
 
 static bool postTelemetry(const String& url, const String& body) {
@@ -151,9 +88,9 @@ void sendPending() {
   TelemetryEntry* e = bufferNextPending(mask);
 
   while (e != nullptr) {
-    String raw  = buildRaw(*e);
+    String raw  = telemetryBuildRaw(*e, gId->public_key_hex);
     String sig  = signMessage(*gId, raw);
-    String body = buildJson(*e, raw, sig);
+    String body = telemetryBuildJson(*e, gId->public_key_hex, raw, sig);
 
     // External servers
     for (size_t i = 0; i < gCfg->servers_external.size() && i < 16; i++) {
