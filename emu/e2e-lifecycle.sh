@@ -149,7 +149,8 @@ sleep 35
 emu_start_raiznetd "$DATA_DIR" || { echo "FALHOU: raiznetd não voltou a subir com o mesmo data dir"; exit 1; }
 
 TARGET=$(( COUNT_AFTER_REBOOT + 3 ))
-if ! COUNT_AFTER_RESTART="$(wait_count_ge "$DEVICE_ID" 120 "$TARGET")"; then
+# Um ciclo de 10s + margem; sem buffer, +3 leituras levariam ≥30s. Com buffer real, deve ser <20s.
+if ! COUNT_AFTER_RESTART="$(wait_count_ge "$DEVICE_ID" 20 "$TARGET")"; then
   echo "FALHOU: buffer não foi entregue após queda do servidor (antes=$COUNT_AFTER_REBOOT depois=$COUNT_AFTER_RESTART esperado>=$TARGET)"
   exit 1
 fi
