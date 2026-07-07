@@ -1401,10 +1401,14 @@ static void handleResetWifi() {
   html += langCode;
   html += "',5000)</script></body></html>";
   server.send(200, "text/html", html);
+#ifndef QEMU_EMULATOR
+  // No QEMU a rede é Ethernet virtual (esp_eth); inicializar o driver Wi-Fi
+  // sem o rádio presente causa panic (LoadStorePIFAddrError no phy_init).
   delay(200);
   WiFi.disconnect(false);
   delay(300);
   WiFi.begin();
+#endif
 }
 
 // ── /reset/factory (GET - confirmation page) ──────────────────────────────
