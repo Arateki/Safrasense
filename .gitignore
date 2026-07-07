@@ -3,3 +3,6 @@ sdkconfig.qemu
 emu/.qemu/
 emu/flash.bin
 include/pio_test_guard.h
+emu/webui/node_modules/
+emu/webui/test-results/
+emu/webui/playwright-report/
